@@ -85,13 +85,17 @@ export const desktopClerkFrontendApiHostname = resolveDesktopClerkFrontendApiHos
     : __T3CODE_BUILD_CLERK_PUBLISHABLE_KEY__,
 );
 
-function createDesktopClerkBridge(tokenDirectory: string, isDevelopment: boolean) {
+function createDesktopClerkBridge(
+  tokenDirectory: string,
+  isDevelopment: boolean,
+  isCustomBuild: boolean,
+) {
   return createClerkBridge({
     storage: storage({ path: tokenDirectory }),
     manageSingleInstanceLock: false,
     passkeys: true,
     renderer: {
-      scheme: ElectronProtocol.getDesktopScheme(isDevelopment),
+      scheme: ElectronProtocol.getDesktopSchemeForBuild(isDevelopment, isCustomBuild),
       host: ElectronProtocol.DESKTOP_HOST,
     },
   });
@@ -142,6 +146,7 @@ export const make = Effect.gen(function* () {
         createDesktopClerkBridge(
           path.resolve(environment.stateDir, "clerk"),
           environment.isDevelopment,
+          environment.isCustomBuild,
         ),
       catch: (cause) =>
         new DesktopClerkBridgeInitializationError({
@@ -199,7 +204,10 @@ export const make = Effect.gen(function* () {
       };
       const resumeProviderAuth = (value: string | undefined) => {
         const destination = providerAuthReturnUrl(value);
-        const expectedOrigin = `${ElectronProtocol.getDesktopScheme(environment.isDevelopment)}://app`;
+        const expectedOrigin = `${ElectronProtocol.getDesktopSchemeForBuild(
+          environment.isDevelopment,
+          environment.isCustomBuild,
+        )}://app`;
         if (!destination?.startsWith(`${expectedOrigin}/`)) return false;
         void runPromise(
           Effect.gen(function* () {

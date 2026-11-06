@@ -2747,12 +2747,29 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         onMultipleModelSelectionsChange={handleMultipleModelSelectionsChangeStable}
         selectedModelSelection={selectedModelSelection}
         onApplyWorkPreset={(preset) => {
+          const entry = providerInstanceEntries.find(
+            (candidate) => candidate.instanceId === preset.modelSelection.instanceId,
+          );
+          if (
+            !entry ||
+            !entry.enabled ||
+            !entry.isAvailable ||
+            entry.status !== "ready" ||
+            getModelDisabledReason(entry.instanceId, preset.modelSelection.model) ||
+            (lockedProvider !== null && entry.driverKind !== lockedProvider)
+          ) {
+            return;
+          }
+          onProviderModelSelect(entry.instanceId, preset.modelSelection.model, {
+            focusComposer: false,
+          });
           useComposerDraftStore
             .getState()
             .setModelSelection(composerDraftTarget, preset.modelSelection, {
               explicit: true,
               replaceOptions: true,
             });
+          useComposerDraftStore.getState().setStickyModelSelection(preset.modelSelection);
           focusComposer();
         }}
         onProviderModelSelect={onProviderModelSelect}

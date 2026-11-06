@@ -461,7 +461,7 @@ export const make = Effect.gen(function* () {
   > {
     if (yield* Ref.get(desktopState.quitting)) return Option.none();
     yield* previewManager.getBrowserSession();
-    const applicationUrl = getDesktopUrl(environment.isDevelopment);
+    const applicationUrl = getDesktopUrl(environment.isDevelopment, environment.isCustomBuild);
     const iconPaths = yield* assets.iconPaths;
     const iconOption = getIconOption(iconPaths, environment.platform);
     const shouldUseDarkColors = yield* electronTheme.shouldUseDarkColors;
@@ -1063,7 +1063,7 @@ export const make = Effect.gen(function* () {
     const detachRemoteRequestHeaders = installMainWindowRemoteRequestHeaderPolicy(
       window.webContents.session,
       {
-        desktopOrigin: getDesktopOrigin(environment.isDevelopment),
+        desktopOrigin: getDesktopOrigin(environment.isDevelopment, environment.isCustomBuild),
         mainWebContentsId: window.webContents.id,
         clerkFrontendApiHostname: DesktopClerk.desktopClerkFrontendApiHostname,
         devServerOrigin: Option.getOrUndefined(
