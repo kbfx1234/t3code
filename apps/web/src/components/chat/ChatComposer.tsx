@@ -2746,6 +2746,15 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         multipleModelSelections={multipleModelSelections}
         onMultipleModelSelectionsChange={handleMultipleModelSelectionsChangeStable}
         selectedModelSelection={selectedModelSelection}
+        onApplyWorkPreset={(preset) => {
+          useComposerDraftStore
+            .getState()
+            .setModelSelection(composerDraftTarget, preset.modelSelection, {
+              explicit: true,
+              replaceOptions: true,
+            });
+          focusComposer();
+        }}
         onProviderModelSelect={onProviderModelSelect}
         activeThreadModelSelection={activeThreadModelSelection}
         selectedModelForPickerWithCustomFallback={selectedModelForPickerWithCustomFallback}
