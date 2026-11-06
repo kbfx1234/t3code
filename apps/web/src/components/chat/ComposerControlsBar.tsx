@@ -31,6 +31,8 @@ import {
 } from "./ComposerModelEffort";
 import type { useComposerProviderModel } from "./useComposerProviderModel";
 import { resolveComposerControlsOwnership } from "./composerControlsOwnership";
+import { WorkPresetsMenu } from "./WorkPresetsMenu";
+import type { WorkPreset } from "../../workPresetsStore";
 
 /**
  * The composer footer controls: the model picker (which also holds effort, speed and
@@ -74,6 +76,7 @@ export function ComposerControlsBar(props: {
   multipleModelSelections: ChatComposerProps["multipleModelSelections"];
   onMultipleModelSelectionsChange: ChatComposerProps["onMultipleModelSelectionsChange"];
   selectedModelSelection: ModelSelection;
+  onApplyWorkPreset: (preset: WorkPreset) => void;
   onProviderModelSelect: ChatComposerProps["onProviderModelSelect"];
   activeThreadModelSelection: ChatComposerProps["activeThreadModelSelection"];
   selectedModelForPickerWithCustomFallback: string;
@@ -118,6 +121,7 @@ export function ComposerControlsBar(props: {
     multipleModelSelections,
     onMultipleModelSelectionsChange,
     selectedModelSelection,
+    onApplyWorkPreset,
     onProviderModelSelect,
     activeThreadModelSelection,
     selectedModelForPickerWithCustomFallback,
@@ -265,6 +269,13 @@ export function ComposerControlsBar(props: {
     </ComposerControl>
   ) : (
     <>
+      <WorkPresetsMenu
+        environmentId={environmentId}
+        modelSelection={selectedModelSelection}
+        size={controlSize}
+        disabled={providerCatalogPending || isSendBusy}
+        onApply={onApplyWorkPreset}
+      />
       {composerModelPicker}
 
       <>
