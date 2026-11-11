@@ -27,4 +27,10 @@ Run the [Kiro CLI](https://kiro.dev/docs/cli/) (V3 engine) in T3 Code with your 
 - **Steering**: Text follow-ups join the running turn after the current step; messages with images restart the turn.
 - **Forking**: Uses Kiro's native conversation copy up to the selected message.
 - **Compaction**: Supports `/compact` as well as Kiro's automatic compaction.
-- **Slash commands**: Typing `/` lists your Kiro skills, steering files, and saved prompts once a Kiro thread has started in that environment. Commands that exist only in Kiro's terminal UI (e.g. `/usage`, `/fullscreen`) aren't available.
+- **Slash commands**: Typing `/` lists your Kiro skills, steering files, and saved prompts once a Kiro thread has started in that environment. Commands that exist only in Kiro's terminal UI (e.g. `/fullscreen`) aren't available. For Kiro's `/usage`, see Credits and limits below.
+
+## Credits and limits
+
+- **Per turn**: Each Kiro reply ends with the credits that turn used, the session's total so far, and how long the turn took, as in Kiro's own CLI.
+- **Plan credits**: **Usage → Limits** and `/usage-limits` show your plan's credits for the current billing cycle and when it resets.
+- **Overage**: If overages are on, a second **Overage** row counts credits used past the plan. Kiro doesn't report your monthly overage cap, so enter it in the Kiro provider's **Monthly overage limit** setting to see the row fill against it. With overages on, using all plan credits doesn't mark Kiro as out of credits until the overage cap is reached.

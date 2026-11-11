@@ -38,6 +38,7 @@ Usage aggregates history across Codex, Claude Code, Grok Build, OpenCode, Antigr
   - **Cursor**: Reports monthly Auto + API quotas via `CURSOR_AUTH_TOKEN` or default-endpoint sign-in/`CURSOR_API_KEY`.
   - **Grok**: Reports billing-period quotas for `grok login` (not `XAI_API_KEY`).
   - **Muse Code**: Reports session/weekly limits after running in a thread (not persisted across restarts).
+  - **Kiro**: Reports plan credits for the billing cycle, plus overage credits when overages are on (see [Kiro](./providers-kiro.md#credits-and-limits) for the overage cap).
   - Pure API-key accounts generally do not report subscription limits.
 - **Mobile widget**: Add the **Subscription usage** widget on iOS or Android to monitor Codex and Claude quotas from your home screen.
 
