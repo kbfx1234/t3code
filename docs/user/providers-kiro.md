@@ -27,3 +27,4 @@ Run the [Kiro CLI](https://kiro.dev/docs/cli/) (V3 engine) in T3 Code with your 
 - **Steering**: Text follow-ups join the running turn after the current step; messages with images restart the turn.
 - **Forking**: Uses Kiro's native conversation copy up to the selected message.
 - **Compaction**: Supports `/compact` as well as Kiro's automatic compaction.
+- **Slash commands**: Typing `/` lists your Kiro skills, steering files, and saved prompts once a Kiro thread has started in that environment. Commands that exist only in Kiro's terminal UI (e.g. `/usage`, `/fullscreen`) aren't available.
