@@ -7,6 +7,7 @@ import { Sheet } from "../../components/ui/Sheet";
 import { ListActionRow } from "../../components/ui/ListActionRow";
 import { ListSection } from "../../components/ui/ListSection";
 import { collectMobileAssistantTextSelectors } from "../../lib/assistantCitationSelection";
+import { useAtomValue } from "@effect/atom-react";
 import { Button } from "../../components/ui/Button";
 import * as Dialog from "../../components/ui/Dialog";
 import { ASSISTANT_CITATION_MAX_TEXT_LENGTH, type AssistantCitation } from "@t3tools/contracts";
@@ -63,6 +64,7 @@ import {
   resolveUserMessagePresentation,
 } from "@t3tools/client-runtime/user-message";
 import { canForkProjectedAssistantItem } from "@t3tools/client-runtime/state/thread-workflows";
+import { formatTurnCreditUsage } from "@t3tools/client-runtime/state/thread-execution";
 import type { ThreadCheckpointSummary } from "@t3tools/client-runtime/state/thread-checkpoints";
 import { formatDiffCount } from "@t3tools/client-runtime/diff-count";
 import type { WorkflowOpening } from "@t3tools/client-runtime/state/subagentRuntime";
@@ -2687,6 +2689,13 @@ function renderFeedEntry(
             onOpenTurnDiff={props.onOpenTurnDiff}
           />
         ) : null}
+        {showAssistantMeta && message.runId ? (
+          <TurnCreditUsageFooter
+            environmentId={props.environmentId}
+            threadId={props.threadId}
+            runId={message.runId}
+          />
+        ) : null}
         {showAssistantMeta ? (
           <View className="mt-1 flex-row items-center gap-1">
             <CopyTextButton
@@ -2735,6 +2744,26 @@ function renderFeedEntry(
       renderReasoning={props.renderReasoning}
       onPressPreview={props.onPressPreview}
     />
+  );
+}
+
+/** Credits the provider billed for the turn, under its last reply (Kiro). */
+function TurnCreditUsageFooter(props: {
+  readonly environmentId: EnvironmentId;
+  readonly threadId: ThreadId;
+  readonly runId: RunId;
+}) {
+  const usage = useAtomValue(
+    environmentThreadDetails.runCreditUsageAtom(
+      scopeThreadRef(props.environmentId, props.threadId),
+      props.runId,
+    ),
+  );
+  if (usage === null) return null;
+  return (
+    <Text className="mt-1 px-2 font-t3-medium text-xs tabular-nums text-foreground-secondary">
+      {formatTurnCreditUsage(usage)}
+    </Text>
   );
 }
 
