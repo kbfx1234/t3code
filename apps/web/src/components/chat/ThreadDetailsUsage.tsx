@@ -119,7 +119,7 @@ function InstanceRows({
 export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowSnapshot }) {
   const maxTokens = usage.maxTokens != null && usage.maxTokens > 0 ? usage.maxTokens : null;
   const used =
-    maxTokens !== null && usage.usedPercentage !== null
+    usage.usedPercentage !== null
       ? Math.round(Math.max(0, Math.min(100, usage.usedPercentage)))
       : null;
   const threshold = usage.autoCompactThreshold ?? null;
@@ -147,11 +147,13 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
           value={
             maxTokens !== null
               ? `${usedTokens} / ${formatContextWindowTokens(maxTokens)}`
-              : usedTokens
+              : used !== null
+                ? `${used}% used · ${100 - used}% left`
+                : usedTokens
           }
           ariaValue={
             used !== null
-              ? gt("{used}% used", { used })
+              ? `${gt("{used}% used", { used })} · ${gt("{left}% left", { left: 100 - used })}`
               : gt("{usedTokens} tokens used", { usedTokens })
           }
           tooltip={
@@ -161,6 +163,9 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
                   ? gt("Context: {used}% used", { used })
                   : gt("Context: {usedTokens} tokens used", { usedTokens })}
               </span>
+              {maxTokens === null && used !== null ? (
+                <span className="text-muted-foreground">{100 - used}% remaining</span>
+              ) : null}
               {maxTokens !== null ? (
                 <span className="text-muted-foreground">
                   {gt("{used} of {max} tokens", {
