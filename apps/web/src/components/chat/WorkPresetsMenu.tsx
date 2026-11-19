@@ -1,5 +1,6 @@
 import type { EnvironmentId, ModelSelection } from "@t3tools/contracts";
 import { BookmarkIcon, PlayIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { T, useGT } from "gt-react";
 import { useState } from "react";
 
 import { cn } from "~/lib/utils";
@@ -30,6 +31,7 @@ export function WorkPresetsMenu(props: {
   onApply: (preset: WorkPreset) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const gt = useGT();
   const presets = useWorkPresetsStore((state) =>
     getWorkPresetsForEnvironment(state, props.environmentId),
   );
@@ -44,7 +46,7 @@ export function WorkPresetsMenu(props: {
           <ComposerControl
             size={props.size}
             disabled={props.disabled}
-            aria-label="Work presets"
+            aria-label={gt("Work presets")}
             className={cn("shrink-0", open && "bg-accent text-foreground")}
           />
         }
@@ -52,17 +54,17 @@ export function WorkPresetsMenu(props: {
         <ComposerControlIcon icon={BookmarkIcon} size={props.size} />
         {props.size === "xs" ? null : (
           <span data-composer-control-label className="max-w-20 truncate">
-            Presets
+            <T>Presets</T>
           </span>
         )}
       </MenuTrigger>
       <MenuPopup align="start" width="content" {...composerFloatingLayerProps}>
         <div className="px-2 pt-1 pb-1.5 font-medium text-muted-foreground text-xs">
-          Work presets
+          <T>Work presets</T>
         </div>
         {presets.length === 0 ? (
           <div className="px-2 py-2 text-muted-foreground text-xs">
-            Save the current model and reasoning settings here.
+            <T>Save the current model and reasoning settings here.</T>
           </div>
         ) : (
           presets.map((preset) => (
@@ -79,14 +81,18 @@ export function WorkPresetsMenu(props: {
                   }}
                 >
                   <PlayIcon />
-                  <MenuItemLabel>Apply preset</MenuItemLabel>
+                  <MenuItemLabel>
+                    <T>Apply preset</T>
+                  </MenuItemLabel>
                 </MenuItem>
                 <MenuItem
                   variant="destructive"
                   onClick={() => remove(props.environmentId, preset.id)}
                 >
                   <Trash2Icon />
-                  <MenuItemLabel>Delete preset</MenuItemLabel>
+                  <MenuItemLabel>
+                    <T>Delete preset</T>
+                  </MenuItemLabel>
                 </MenuItem>
               </MenuSubPopup>
             </MenuSub>
@@ -101,7 +107,9 @@ export function WorkPresetsMenu(props: {
           }}
         >
           <PlusIcon />
-          <MenuItemLabel>Save current settings</MenuItemLabel>
+          <MenuItemLabel>
+            <T>Save current settings</T>
+          </MenuItemLabel>
         </MenuItem>
       </MenuPopup>
     </Menu>

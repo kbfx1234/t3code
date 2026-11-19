@@ -42,7 +42,7 @@ import {
   withLegacyUltracodeEffort,
 } from "@t3tools/shared/model";
 import { unsentManualContinuationSource } from "@t3tools/shared/orchestrationV2ManualContinuation";
-import { formatDuration } from "@t3tools/shared/orchestrationTiming";
+import { formatDuration } from "@t3tools/shared/orchestrationTimingCopy";
 import * as DateTime from "effect/DateTime";
 
 import {
@@ -962,12 +962,22 @@ function formatCredits(value: number): string {
 }
 
 /** Kiro CLI's turn footer: `Credits: turn 0.37 • session 0.37 | Time: 4s`. */
-export function formatTurnCreditUsage(usage: OrchestrationV2ProviderTurnCreditUsage): string {
+export function formatTurnCreditUsage(
+  usage: OrchestrationV2ProviderTurnCreditUsage,
+  resolve: MFunctionType = mFallback,
+): string {
   const credits = [
-    `turn ${formatCredits(usage.turn)}`,
-    ...(usage.session === undefined ? [] : [`session ${formatCredits(usage.session)}`]),
+    resolve(msg("turn {credits}", { credits: formatCredits(usage.turn) })),
+    ...(usage.session === undefined
+      ? []
+      : [resolve(msg("session {credits}", { credits: formatCredits(usage.session) }))]),
   ].join(" • ");
   return usage.elapsedMs === undefined
-    ? `Credits: ${credits}`
-    : `Credits: ${credits} | Time: ${formatDuration(usage.elapsedMs)}`;
+    ? resolve(msg("Credits: {credits}", { credits }))
+    : resolve(
+        msg("Credits: {credits} | Time: {duration}", {
+          credits,
+          duration: formatDuration(usage.elapsedMs, resolve),
+        }),
+      );
 }

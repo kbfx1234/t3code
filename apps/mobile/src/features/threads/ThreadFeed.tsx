@@ -2768,6 +2768,7 @@ function TurnCreditUsageFooter(props: {
   readonly threadId: ThreadId;
   readonly runId: RunId;
 }) {
+  const m = useMessages();
   const usage = useAtomValue(
     environmentThreadDetails.runCreditUsageAtom(
       scopeThreadRef(props.environmentId, props.threadId),
@@ -2777,7 +2778,7 @@ function TurnCreditUsageFooter(props: {
   if (usage === null) return null;
   return (
     <Text className="mt-1 px-2 font-t3-medium text-xs tabular-nums text-foreground-secondary">
-      {formatTurnCreditUsage(usage)}
+      {formatTurnCreditUsage(usage, m)}
     </Text>
   );
 }
