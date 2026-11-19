@@ -223,11 +223,12 @@ export function AssistantMetaTimelineRow({
 /** Credits the provider billed for the turn, shown under its last reply (Kiro). */
 function TurnCreditUsageFooter({ runId }: { runId: RunId | null | undefined }) {
   const ctx = use(TimelineRowCtx);
+  const m = useMessages();
   const usage = useRunCreditUsage(ctx.threadRef, runId);
   if (usage === null) return null;
   return (
     <p className="mt-1.5 text-muted-foreground text-xs tabular-nums">
-      {formatTurnCreditUsage(usage)}
+      {formatTurnCreditUsage(usage, m)}
     </p>
   );
 }

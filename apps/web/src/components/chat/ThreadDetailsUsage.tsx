@@ -133,7 +133,9 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
                   : gt("Context: {usedTokens} tokens used", { usedTokens })}
               </span>
               {maxTokens === null && used !== null ? (
-                <span className="text-muted-foreground">{100 - used}% remaining</span>
+                <span className="text-muted-foreground">
+                  {gt("{left}% left", { left: 100 - used })}
+                </span>
               ) : null}
               {maxTokens !== null ? (
                 <span className="text-muted-foreground">
