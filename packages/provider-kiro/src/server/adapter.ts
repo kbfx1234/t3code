@@ -458,6 +458,28 @@ const applyKiroModelSelection =
       Effect.tap((appliedModel) => applyKiroEffort(runtime, modelSelection, appliedModel)),
     );
 
+/**
+ * The model, effort and agent Kiro's config options say the session runs, under
+ * T3's option ids. It can differ from the thread's pick: Kiro's default resolves
+ * to a real model, and an effort or agent Kiro doesn't offer is never sent.
+ */
+function kiroReportedModelSelection(
+  configOptions: ReadonlyArray<EffectAcpSchema.SessionConfigOption>,
+): Omit<ModelSelection, "instanceId"> | undefined {
+  const modelOption = findKiroModelOption(configOptions);
+  if (modelOption?.type !== "select") return undefined;
+  const options = (
+    [
+      ["reasoningEffort", KIRO_EFFORT_CONFIG_ID],
+      [KIRO_AGENT_CONFIG_ID, KIRO_AGENT_CONFIG_ID],
+    ] as const
+  ).flatMap(([id, nativeId]) => {
+    const option = configOptions.find((candidate) => candidate.id === nativeId);
+    return option?.type === "select" ? [{ id, value: option.currentValue }] : [];
+  });
+  return { model: modelOption.currentValue, ...(options.length > 0 ? { options } : {}) };
+}
+
 function selectValues(
   option: Extract<EffectAcpSchema.SessionConfigOption, { readonly type: "select" }>,
 ): ReadonlyArray<string> {
@@ -705,6 +727,7 @@ function makeKiroAcpAdapterFlavor(options: KiroAdapterV2Options): AcpAdapterV2Fl
     forkFromTurn: kiroForkFromTurn,
     turnCreditUsage: kiroTurnCreditUsage,
     contextUsage: kiroContextUsage,
+    reportedModelSelection: kiroReportedModelSelection,
     ...(options.onAvailableCommandsUpdate === undefined
       ? {}
       : { onAvailableCommandsUpdate: options.onAvailableCommandsUpdate }),

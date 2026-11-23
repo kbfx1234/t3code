@@ -507,6 +507,10 @@ export interface AcpAdapterV2Flavor {
   readonly contextUsage?: (
     notification: EffectAcpSchema.SessionNotification,
   ) => ThreadTokenUsageSnapshot | undefined;
+  /** What the agent's config options say it runs, recorded on the provider thread at turn start. */
+  readonly reportedModelSelection?: (
+    configOptions: ReadonlyArray<EffectAcpSchema.SessionConfigOption>,
+  ) => Omit<ModelSelection, "instanceId"> | undefined;
   readonly onSessionConfigurationUpdate?: (
     configOptions: ReadonlyArray<EffectAcpSchema.SessionConfigOption>,
     modeState: AcpSessionModeState | undefined,
@@ -10601,6 +10605,17 @@ export const makeAcpAdapterV2 = Effect.fn("makeAcpAdapterV2")(function* (
             const rememberedContextUsage = (yield* Ref.get(contextUsageBySessionId)).get(
               requestedSessionId,
             );
+            if (flavor.reportedModelSelection !== undefined) {
+              const reported = flavor.reportedModelSelection(yield* runtime.getConfigOptions);
+              if (reported !== undefined) {
+                yield* Ref.update(nativeMetadataBySessionId, (current) =>
+                  new Map(current).set(requestedSessionId, {
+                    ...current.get(requestedSessionId),
+                    modelSelection: { ...reported, instanceId: options.instanceId },
+                  }),
+                );
+              }
+            }
             const rememberedNativeMetadata = (yield* Ref.get(nativeMetadataBySessionId)).get(
               requestedSessionId,
             );

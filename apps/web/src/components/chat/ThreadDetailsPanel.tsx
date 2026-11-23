@@ -34,6 +34,7 @@ import {
   type ThreadDetailsUsageInput,
 } from "./ThreadDetailsUsage";
 import { ThreadDetailsItemsMenuItems } from "./ThreadDetailsItemsMenu";
+import { ThreadDetailsRun } from "./ThreadDetailsRun";
 import { resolveThreadDetailsVisibility, THREAD_DETAILS_ITEMS } from "./threadDetailsItems";
 import { useClientSettings } from "../../hooks/useSettings";
 import { useProject, useServerConfigs } from "../../state/entities";
@@ -324,6 +325,14 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                   threadId={props.threadId}
                   showLineage={visible.lineage}
                   showSideChats={visible.sideChats}
+                />
+              ) : null}
+
+              {!props.draftId && visible.run ? (
+                <ThreadDetailsRun
+                  environmentId={props.environmentId}
+                  threadId={props.threadId}
+                  providers={props.usage.providers}
                 />
               ) : null}
 

@@ -954,6 +954,15 @@ describe("KiroAdapterV2 agents", () => {
     options: [...modeOption.options, option("reviewer", "reviewer")],
   });
   const agent = (value: string) => [{ id: "mode", value }];
+  // What the turn's provider thread says Kiro runs, without the instance id.
+  const reportedSelection = (events: ReadonlyArray<ProviderAdapterV2Event>) => {
+    const updated = events.findLast((event) => event.type === "provider_thread.updated");
+    if (updated?.type !== "provider_thread.updated") return undefined;
+    const selection = updated.providerThread.nativeMetadata?.modelSelection;
+    if (selection === undefined) return undefined;
+    const { instanceId: _instanceId, ...rest } = selection;
+    return rest;
+  };
 
   it.effect("selects the thread's agent before its model, which the agent would replace", () =>
     runKiroScript({
@@ -1004,9 +1013,19 @@ describe("KiroAdapterV2 agents", () => {
       drive: ({ events, startTurnOn }) =>
         Effect.gen(function* () {
           yield* startTurnOn(1, "claude-opus-5.5", agent("reviewer"));
-          assert.equal(terminalStatus(yield* collectTurn(events)), "completed");
+          const first = yield* collectTurn(events);
+          assert.equal(terminalStatus(first), "completed");
+          assert.deepStrictEqual(reportedSelection(first), {
+            model: "claude-opus-5.5",
+            options: agent("reviewer"),
+          });
           yield* startTurnOn(2, "claude-opus-5.5", agent("spec"));
-          assert.equal(terminalStatus(yield* collectTurn(events)), "completed");
+          const second = yield* collectTurn(events);
+          assert.equal(terminalStatus(second), "completed");
+          assert.deepStrictEqual(reportedSelection(second), {
+            model: "claude-opus-5.5",
+            options: agent("spec"),
+          });
         }),
     }).pipe(Effect.provide(testLayer)),
   );
