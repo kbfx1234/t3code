@@ -25,6 +25,7 @@ import {
   KIRO_SUPPORTED_RUNTIME_MODES,
   makeKiroAcpRuntime,
 } from "./acpSupport.ts";
+import { kiroNativeSessions } from "./sessions.ts";
 import { kiroUsageLimits, parseKiroOverageLimit } from "./usageLimits.ts";
 import {
   AUTH_PROBE_TIMEOUT_MS,
@@ -86,8 +87,9 @@ const snapshot = (
   probe: ProviderProbeResult,
   listed?: ReadonlyArray<ServerProviderModel>,
   agents?: ProviderOptionDescriptor,
-) =>
-  buildServerProvider({
+  nativeSessions?: ServerProviderDraft["nativeSessions"],
+): ServerProviderDraft => ({
+  ...buildServerProvider({
     // Gives the snapshot its version advisory; Kiro runs no enrichment pass.
     driver: KIRO_DRIVER_KIND,
     presentation: KIRO_PRESENTATION,
@@ -97,7 +99,10 @@ const snapshot = (
     // `/compact` runs `_kiro/session/compact`; see kiroCompactSession.
     slashCommands: [COMPACT_SLASH_COMMAND],
     probe,
-  });
+  }),
+  // The composer's `/chat` and Settings list these for import as T3 threads.
+  ...(nativeSessions === undefined ? {} : { nativeSessions }),
+});
 
 const decodeKiroCommandMeta = Schema.decodeUnknownOption(
   Schema.Struct({ kiro: Schema.Struct({ type: Schema.String }) }),
@@ -379,8 +384,8 @@ export function kiroAgentDescriptor(template: unknown): ProviderOptionDescriptor
 }
 
 /**
- * Asks Kiro for its agents and the account's usage with `initialize`,
- * `_kiro/config/template` and `_kiro/account/getUsage` and nothing more: no
+ * Asks Kiro for its agents, session capabilities and the account's usage with
+ * `initialize`, `_kiro/config/template` and `_kiro/account/getUsage` and nothing more: no
  * `session/new`, so no MCP server starts and no session is stored. The process
  * runs in the server's working directory.
  */
@@ -394,8 +399,8 @@ const probeKiroAcp = Effect.fn("KiroProvider.probeKiroAcp")(function* (
     cwd: yield* HostProcess.WorkingDirectory,
     clientInfo: { name: "t3-code-provider-probe", version: "0.0.0" },
   });
-  yield* runtime.initialize();
-  return yield* Effect.all(
+  const initialized = yield* runtime.initialize();
+  const probed = yield* Effect.all(
     {
       agents: runtime.request("_kiro/config/template", {}).pipe(
         Effect.map(kiroAgentDescriptor),
@@ -409,6 +414,7 @@ const probeKiroAcp = Effect.fn("KiroProvider.probeKiroAcp")(function* (
     },
     { concurrency: "unbounded" },
   );
+  return { ...probed, nativeSessions: kiroNativeSessions(initialized) };
 }, Effect.scoped);
 
 export const checkKiroProviderStatus = Effect.fn("checkKiroProviderStatus")(function* (
@@ -534,5 +540,6 @@ export const checkKiroProviderStatus = Effect.fn("checkKiroProviderStatus")(func
     },
     listed,
     probed?.agents,
+    probed?.nativeSessions,
   );
 });

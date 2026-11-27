@@ -28,6 +28,7 @@ Run the [Kiro CLI](https://kiro.dev/docs/cli/) (V3 engine) in T3 Code with your 
 - **Forking**: Uses Kiro's native conversation copy up to the selected message.
 - **Compaction**: Supports `/compact` as well as Kiro's automatic compaction.
 - **Slash commands**: Typing `/` lists your Kiro skills, steering files, and saved prompts once a Kiro thread has started in that environment. Commands that exist only in Kiro's terminal UI (e.g. `/fullscreen`) aren't available. For Kiro's `/usage`, see Credits and limits below.
+- **Earlier sessions**: `/chat` lists the Kiro sessions saved for the current project, including ones started in Kiro's terminal app, newest first. Pick one to open it as a T3 thread with its messages; a session that already has a thread opens that thread. The same list is under **Settings → Providers → Kiro → Native sessions**.
 
 ## Credits and limits
 

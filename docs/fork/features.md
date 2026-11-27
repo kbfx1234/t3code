@@ -89,6 +89,33 @@ rebase 冲突时：先 `git show REBASE_HEAD` 看停在哪个提交，按标题�
   - 列表只在内存里，按 provider instance 共享，取最近一个 session 发来的。server 重启后到第一个 Kiro session 开始前只有 `/compact`；不同项目的 workspace steering 不同时，显示的是最近启动的那个 session 的列表。需要按项目区分时再改。
   - 只测了纯函数 `kiroSlashCommands`，driver 的接线（`liveSlashCommands` 加 `enrichSnapshot`）没有测试。
 
+## Kiro `/chat` 打开历史会话
+
+来源提交：`feat(kiro): /chat opens earlier Kiro sessions as T3 threads`。
+
+- **做什么**：Kiro 线程的 composer 里输入 `/chat`，弹出当前项目目录下 Kiro 保存的会话（包括在 Kiro 终端界面或 Orca 里开的），按更新时间排列。点一条就导入成 T3 线程并跳过去；已经有对应线程的直接打开。Settings → Providers → Kiro 也多了 upstream 现成的 Native sessions 列表。
+- **入口 / 设置**：无开关。`/chat` 只在选中 Kiro、有项目、且 Kiro 的 `initialize` 声明了 `sessionCapabilities.list` 和 `loadSession` 时出现。
+- **生效端**：web 和 desktop。mobile 没有 `/chat`。server 端走 upstream 给 ACP registry 做的通用导入：`serverListAcpRegistrySessions` / `serverImportAcpRegistrySession` RPC、`AcpRegistrySessions.importSession`、`AgentSessionImporter.importNativeHistory`。
+- **关键改动点**：
+  - `packages/provider-kiro/src/server/sessions.ts`：`kiroNativeSessions`（从 `initialize` 读能力，`canDelete` 固定为 `false`）、`kiroSessionPage`（把 `session/list` 结果裁到契约上限）、`makeKiroSessionManagement`（每次列表开一个短命的 `kiro-cli acp` 进程，cwd 为项目根目录；其余方法一律返回 unsupported）。
+  - `status.ts` 的 `probeKiroAcp` 返回 `nativeSessions`，`snapshot()` 把它写进 provider snapshot；`driver.ts` 给实例加 `acpSessionManagement`。
+  - `apps/web/src/components/chat/NativeSessionsDialog.tsx`：对话框，列表用就地定义的 `createEnvironmentRpcQueryAtomFamily`（`staleTimeMs: 0`），导入后 `navigate` 到线程。
+  - `composer-logic.ts` 的 `ComposerSlashCommand` 加 `"chat"`；`useComposerMenuItems.ts` 的 `nativeSessionsAvailable` 参数和 `slash:chat` 内置项，并隐藏 provider 自己同名的 `chat`；`ChatComposer.tsx` 的 `nativeSessionsAvailable`、`nativeSessionsOpen`、选中 `chat` 的分支，对话框渲染在 `<form>` 外面。
+  - `ProviderSettingsPanel.tsx` 的 `acpProjects` 和 `ProviderInstanceCard.tsx` 的 `AcpSessionManagementSection` 条件都加了 `driver === "kiro"`。
+  - 5 条 web 词条（`d93d8cced8a73bd3`、`c4e648e597122001`、`27029f939daae918`、`8f81b464a52cc2a8`、`2aa1eff4fa3eff75`），10 种语言都插在 `f24b0191b4db21f6` 后面。
+- **必须保留**：
+  - T3 不删除 Kiro 会话（`canDelete: false`），因为同一份会话 Kiro 终端界面和 Orca 也在用。
+  - `/chat` 是 web 内置命令，不放进 Kiro 的 `slashCommands`，否则 mobile 会把 `/chat` 当文本发给模型。
+  - 对话框不能放在 composer 的 `<form>` 里：表单的 focus / blur / keydown 处理会把对话框当成 composer。
+  - 新增词条不要用 `vp run i18n:generate` 整份重写翻译文件，它会重排所有键，之后每次 rebase 都冲突。只插入新键。
+- **已知冲突热点**：`ChatComposer.tsx` 的 `onSelectComposerItem` 和返回的 JSX、`useComposerMenuItems.ts` 的 `builtInSlashCommandItems`。upstream 改了 `AcpSessionManagement` 接口（`ProviderInstance["acpSessionManagement"]`）时，`makeKiroSessionManagement` 要补齐新方法。
+- **验证**：`vp test run apps/server/src/provider/KiroProvider.test.ts`。手动：在有 Kiro 历史会话的项目里选 Kiro，输入 `/chat`，点一条，确认跳到新线程且消息都在；再输一次 `/chat`，那条显示 Imported，点它直接打开同一线程。
+- **限制**：
+  - 只列出 cwd 恰好是项目根目录的会话。在子目录或 worktree 里开的 Kiro 会话不会出现。
+  - 导入的消息时间是导入时刻，模型用 Kiro 默认，权限是 Supervised，这些都是 upstream 导入流程的默认值。
+  - 只列第一页（最多 256 条），没有“加载更多”；Kiro 3.6 实测一页返回全部。
+  - 菜单关掉后直接把 `/chat` 作为文本发送，会发给 Kiro 而不是打开对话框。
+
 ## Kiro 每轮 credits 与套餐额度
 
 来源提交：`feat(kiro): show Kiro credits per turn and plan limits with overage`。

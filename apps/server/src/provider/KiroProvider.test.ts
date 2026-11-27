@@ -18,6 +18,7 @@ import {
   checkKiroProviderStatus,
   kiroAgentDescriptor,
   kiroDefaultModelId,
+  kiroSessionPage,
   kiroSlashCommands,
   kiroUsageLimits,
   parseKiroOverageLimit,
@@ -57,6 +58,11 @@ function processHandle(output: CliOutput) {
 }
 
 const KIRO_ACP_ARGS = "acp --agent-engine=v3 --auth-method=cli";
+// Kiro CLI 3.6.2's `initialize`: it lists, loads and deletes sessions but cannot resume them.
+const KIRO_CAPABILITIES = {
+  loadSession: true,
+  sessionCapabilities: { list: {}, close: {}, delete: {}, fork: {} },
+};
 const decodeRequest = Schema.decodeUnknownSync(
   Schema.fromJsonString(
     Schema.Struct({ id: Schema.Union([Schema.String, Schema.Number]), method: Schema.String }),
@@ -79,7 +85,9 @@ const acpProcess = (template: unknown) =>
       const request = decodeRequest(line);
       const response =
         request.method === "initialize"
-          ? { result: { protocolVersion: 1, agentCapabilities: {}, authMethods: [] } }
+          ? {
+              result: { protocolVersion: 1, agentCapabilities: KIRO_CAPABILITIES, authMethods: [] },
+            }
           : request.method === "_kiro/config/template"
             ? { result: template }
             : { error: { code: -32601, message: `${request.method} is not scripted` } };
@@ -407,6 +415,13 @@ describe("KiroProvider", () => {
           ["my-model", ["vibe", "reviewer"]],
         ],
       );
+      // T3 imports Kiro sessions but never deletes one the TUI or Orca may still use.
+      assert.deepStrictEqual(snapshot.nativeSessions, {
+        canList: true,
+        canLoad: true,
+        canResume: false,
+        canDelete: false,
+      });
     }),
   );
 
@@ -592,6 +607,37 @@ describe("KiroProvider", () => {
         },
         { name: "frontend-slides", description: "Steering: frontend-slides" },
       ],
+    );
+  });
+
+  it("bounds Kiro's session list to the wire contract", () => {
+    const page = kiroSessionPage(
+      { protocolVersion: 1, agentCapabilities: KIRO_CAPABILITIES },
+      {
+        sessions: [
+          {
+            sessionId: "sess_1",
+            cwd: "/repo",
+            title: ` ${"x".repeat(1_100)} `,
+            updatedAt: "2026-11-23T14:26:30.797Z",
+            _meta: { kiro: { source: "local" } },
+          },
+          { sessionId: " ", cwd: "/repo" },
+          { sessionId: "sess_2", cwd: "/repo", title: null },
+        ],
+        nextCursor: "",
+      },
+    );
+    assert.deepStrictEqual(
+      page.sessions.map((session) => [session.sessionId, session.title?.length ?? null]),
+      [
+        ["sess_1", 1_024],
+        ["sess_2", null],
+      ],
+    );
+    assert.deepStrictEqual(
+      [page.nextCursor, page.canLoad, page.canResume, page.canDelete],
+      [null, true, false, false],
     );
   });
 

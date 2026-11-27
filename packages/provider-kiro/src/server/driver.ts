@@ -39,6 +39,7 @@ import {
   kiroDefaultModelId,
   kiroSlashCommands,
 } from "./status.ts";
+import { makeKiroSessionManagement } from "./sessions.ts";
 
 const DRIVER_KIND = ProviderDriverKind.make("kiro");
 const decodeKiroSettings = Schema.decodeSync(KiroSettings);
@@ -196,6 +197,12 @@ export const KiroDriver: ProviderDriver<KiroSettings, KiroDriverEnv> = {
       snapshot,
       orchestrationAdapter,
       textGeneration: unsupportedTextGeneration,
+      acpSessionManagement: makeKiroSessionManagement({
+        settings: effectiveConfig,
+        environment: processEnv,
+        spawner,
+        random: crypto,
+      }),
     } satisfies ProviderInstance;
   }),
 };
